@@ -7,7 +7,7 @@ const UserSchema = new Schema({
     firstName: {type: String, required: true},
     lastName: {type: String, required: true},
     photo: {type: String,required: true},
-    role: {type: String, default:'admin'},
+    role: { type: String, default: "user", enum: ["user", "admin"] },
     createdAt: {type: Date, default: Date.now},
 })
 
