@@ -70,7 +70,7 @@ export async function POST(req: Request) {
 
       if (newUser) {
         // Updated clerkClient usage
-        await clerkClient.users.updateMetadata(id, {
+        await clerkClient.users.updateUserMetadata(id, {
           publicMetadata: {
             userid: newUser._id,
             role: newUser.role,
