@@ -7,20 +7,21 @@ import User from "../database/models/user.model";
 import { handleError } from "../utils";
 import { revalidatePath } from "next/cache";
 
-export const createUser = async (user: createUserParams) => {
+export async function createUser(userData: any) {
   try {
+    // Connect to your database (if using MongoDB)
     await connectToDatabase();
-    console.log("DB connection successful");
-
-    const newUser = await User.create(user);
-    console.log("user created successfully", newUser);
-
-    return JSON.parse(JSON.stringify(newUser));
+    
+    // Create the user
+    const newUser = await User.create(userData);
+    console.log(newUser)
+    
+    return newUser;
   } catch (error) {
-    handleError(error);
-    console.error("Error creating user:", error);
+    console.error("Error in createUser:", error);
+    throw error;
   }
-};
+}
 
 export async function updateUser(clerkId: string, user: UpdateUserParams) {
   try {

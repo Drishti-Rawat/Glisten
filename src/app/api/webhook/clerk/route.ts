@@ -1,9 +1,9 @@
 import { Webhook } from "svix";
 import { headers } from "next/headers";
 import { WebhookEvent } from "@clerk/nextjs/server";
-import { createUser, updateUser, deleteUser } from "@/lib/actions/user.actions";
-import { NextResponse } from "next/server";
 import { clerkClient } from "@clerk/clerk-sdk-node";  // Updated import
+import { createUser, deleteUser, updateUser } from "@/lib/actions/user.actions";
+import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
@@ -55,27 +55,40 @@ export async function POST(req: Request) {
   if (eventType === "user.created") {
     try {
       const { id, email_addresses, image_url, first_name, last_name, username } = evt.data;
+      
+      console.log("Creating user with data:", {
+        id,
+        email: email_addresses?.[0]?.email_address,
+        username,
+        firstName: first_name,
+        lastName: last_name
+      });
 
       const user = {
         clerkId: id,
-        email: email_addresses[0].email_address,
-        username: username!,
-        firstName: first_name!,
-        lastName: last_name!,
+        email: email_addresses?.[0]?.email_address,
+        username: username || email_addresses?.[0]?.email_address?.split('@')[0] || '',
+        firstName: first_name || '',
+        lastName: last_name || '',
         photo: image_url,
-        role: "user",
+        role: "user"  // Adding default role
       };
 
       const newUser = await createUser(user);
+      console.log("User created in database:", newUser);
 
       if (newUser) {
-        // Updated clerkClient usage
-        await clerkClient.users.updateUserMetadata(id, {
-          publicMetadata: {
-            userid: newUser._id,
-            role: newUser.role,
-          },
-        });
+        try {
+          await clerkClient.users.updateUserMetadata(id, {
+            publicMetadata: {
+              userid: newUser._id.toString(),  // Convert ObjectId to string
+              role: "user"
+            }
+          });
+          console.log("Clerk metadata updated successfully");
+        } catch (metadataError) {
+          console.error("Error updating Clerk metadata:", metadataError);
+        }
       }
 
       return NextResponse.json(
@@ -86,7 +99,7 @@ export async function POST(req: Request) {
         { status: 200 }
       );
     } catch (error) {
-      console.error("Error handling user.created event:", error);
+      console.error("Error in user.created webhook:", error);
       return NextResponse.json(
         {
           message: "Error creating user",
@@ -102,10 +115,10 @@ export async function POST(req: Request) {
       const { id, image_url, first_name, last_name, username } = evt.data;
 
       const user = {
-        username: username!,
-        firstName: first_name!,
-        lastName: last_name!,
-        photo: image_url,
+        username: username || '',
+        firstName: first_name || '',
+        lastName: last_name || '',
+        photo: image_url
       };
 
       const updatedUser = await updateUser(id, user);
@@ -118,7 +131,7 @@ export async function POST(req: Request) {
         { status: 200 }
       );
     } catch (error) {
-      console.error("Error handling user.updated event:", error);
+      console.error("Error in user.updated webhook:", error);
       return NextResponse.json(
         {
           message: "Error updating user",
@@ -141,7 +154,7 @@ export async function POST(req: Request) {
         { status: 200 }
       );
     } catch (error) {
-      console.error("Error handling user.deleted event:", error);
+      console.error("Error in user.deleted webhook:", error);
       return NextResponse.json(
         {
           message: "Error deleting user",
