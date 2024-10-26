@@ -2,7 +2,7 @@
 import React from 'react'
 import { Satisfy } from "next/font/google";
 import Link from 'next/link';
-import { Search, ShoppingBag, User } from 'lucide-react';
+import { Search, ShoppingBag} from 'lucide-react';
 import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
 const rugeBoogie = Satisfy({
     subsets: ["latin"],
